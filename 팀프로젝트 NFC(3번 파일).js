@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 4. "데이터 가져오기" 버튼 클릭 이벤트 리스너
     scanButton.addEventListener('click', () => {
         // NFC ID를 시뮬레이션
-        const simulatedNfcId = (nfcTagIdInput.value === 'ZONE-C-05') ? 'ZONE-C-05' : 'ZONE-A-01';
+        const simulatedNfcId  = (nfcTagIdInput.value === 'ZONE-C-05') ? 'ZONE-C-05' : 'ZONE-A-01';
         
         // 입력창에 시뮬레이션 ID 표시
         nfcTagIdInput.value = simulatedNfcId;
@@ -163,6 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 updateDisplayNotFound();
             }
+            sendNfcIdToServer(simulatedNfcId);
         }, 1000); 
     });
 
@@ -208,3 +209,33 @@ document.addEventListener('DOMContentLoaded', () => {
     scanButton.click(); 
 
 });
+// NFC ID를 파이썬 서버로 전송하는 함수 (전화기 역할)
+async function sendNfcIdToServer(nfcId) {
+    // 파이썬 서버 주소 (여러분의 컴퓨터에서 켜져 있음)
+    const serverUrl = 'http://127.0.0.1:5000/record'; 
+    
+    try {
+        const response = await fetch(serverUrl, {
+            method: 'POST', // 서버로 데이터를 보낼 때 사용
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            // NFC ID를 JSON 형태로 포장해서 보냅니다.
+            body: JSON.stringify({ nfc_id: nfcId })
+        });
+        
+        const result = await response.json();
+
+        if (response.ok) {
+            // 성공적으로 기록되면 알림을 띄웁니다.
+            alert(`✅ NFC 기록 성공! ID: ${nfcId}, 온도: ${result.temp}°C`);
+        } else {
+            // 실패하면 오류 메시지를 띄웁니다.
+            alert(`❌ NFC 기록 실패: ${result.message}`);
+        }
+
+    } catch (error) {
+        // 서버가 꺼져있거나 주소가 틀리면 이 오류가 뜹니다.
+        alert('🚨 서버 연결 오류! 파이썬 서버가 켜져 있는지 확인하세요.');
+    }
+}
